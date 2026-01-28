@@ -1,0 +1,147 @@
+// ... existing code ...
+
+function displayMatchResults(data) {
+    const resultsContainer = document.getElementById('matchResults');
+    resultsContainer.style.display = 'block';
+
+    if (data.error) {
+        resultsContainer.innerHTML = `<div class="match-warning">${data.error}</div>`;
+        return;
+    }
+
+    let resultsHTML = '';
+
+    // Add timing information
+    resultsHTML += `
+        <div class="timing-info">
+            <p>Feature extraction: ${data.timing.feature_extraction_ms}ms | Search: ${data.timing.search_ms}ms</p>
+            <p>Faces found: ${data.faces_found} | Faces processed: ${data.faces_processed}</p>
+        </div>
+    `;
+
+    // Check if we're dealing with multi-face results
+    if (data.face_results && data.face_results.length > 0) {
+        // Multi-face processing
+        data.face_results.forEach((faceResult, index) => {
+            resultsHTML += `
+                <div class="face-result-container">
+                    <h3>Face #${index + 1}</h3>
+                    <div class="query-image">
+                        <img src="${faceResult.query_image_url}" alt="Query Face ${index + 1}" loading="lazy">
+                    </div>
+            `;
+
+            // Add warning if present
+            if (faceResult.warning) {
+                resultsHTML += `<div class="match-warning">${faceResult.warning}</div>`;
+            }
+
+            // Add twins info if present
+            if (faceResult.potential_twins) {
+                // Check if potential_twins is an object with a nested array or directly an array
+                const twinsArray = Array.isArray(faceResult.potential_twins) ? 
+                              faceResult.potential_twins : 
+                              faceResult.potential_twins.potential_twins;
+                
+                if (twinsArray && twinsArray.length >= 2) {
+                    resultsHTML += `<div class="match-twins-info">Potential twins detected: ${twinsArray[0].name} and ${twinsArray[1].name}</div>`;
+                }
+            }
+
+            // Add match results for this face
+            if (faceResult.matches && faceResult.matches.length > 0) {
+                resultsHTML += '<h4>Matches</h4>';
+                
+                faceResult.matches.forEach(match => {
+                    const similarityPercent = Math.round(match.similarity * 100);
+                    const confidencePercent = Math.round(match.confidence * 100);
+                    
+                    resultsHTML += `
+                        <div class="match-result-item">
+                            <div class="match-image">
+                                <img src="${match.image_url}" alt="${match.name}" onerror="this.onerror=null;this.src='/static/images/placeholder.png';" loading="lazy">
+                            </div>
+                            <div class="match-details">
+                                <h4>${match.name} <span class="match-score">${similarityPercent}%</span></h4>
+                                <p>Confidence: ${confidencePercent}%</p>
+                                <p>Cosine Similarity: ${Math.round(match.cosine_sim * 100)}%</p>
+                                <p>L2 Similarity: ${Math.round(match.l2_similarity * 100)}%</p>
+                                <p>Quality Score: ${Math.round(match.quality_score * 100)}%</p>
+                                ${match.is_partial ? '<p><strong>Note:</strong> Partial face detected</p>' : ''}
+                                ${match.is_masked ? '<p><strong>Note:</strong> Face mask detected</p>' : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                resultsHTML += '<div class="no-matches">No matching faces found for this face.</div>';
+            }
+            
+            resultsHTML += '</div><hr>';
+        });
+    } else {
+        // Single face processing (backward compatibility)
+        // Add query image
+        resultsHTML += `
+            <div class="query-image">
+                <h3>Query Image</h3>
+                <img src="${data.query_image_url}" alt="Query Face" loading="lazy">
+            </div>
+        `;
+
+        // Add warning if present
+        if (data.warning) {
+            resultsHTML += `<div class="match-warning">${data.warning}</div>`;
+        }
+
+        // Add twins info if present
+        // Check if twins_info is an object with a nested array or directly an array
+        const twinsArray = Array.isArray(data.twins_info) ? 
+                      data.twins_info : 
+                      data.twins_info.potential_twins;
+        
+        if (twinsArray && twinsArray.length >= 2) {
+            resultsHTML += `<div class="match-twins-info">Potential twins detected: ${twinsArray[0].name} and ${twinsArray[1].name}</div>`;
+        }
+
+        // Add match results
+        if (data.matches && data.matches.length > 0) {
+            resultsHTML += '<h3>Matches</h3>';
+            
+            data.matches.forEach(match => {
+                const similarityPercent = Math.round(match.similarity * 100);
+                const confidencePercent = Math.round(match.confidence * 100);
+                
+                resultsHTML += `
+                    <div class="match-result-item">
+                        <div class="match-image">
+                            <img src="${match.image_url}" alt="${match.name}" onerror="this.onerror=null;this.src='/static/images/placeholder.png';" loading="lazy">
+                        </div>
+                        <div class="match-details">
+                            <h4>${match.name} <span class="match-score">${similarityPercent}%</span></h4>
+                            <p>Confidence: ${confidencePercent}%</p>
+                            <p>Cosine Similarity: ${Math.round(match.cosine_sim * 100)}%</p>
+                            <p>L2 Similarity: ${Math.round(match.l2_similarity * 100)}%</p>
+                            <p>Quality Score: ${Math.round(match.quality_score * 100)}%</p>
+                            ${match.is_partial ? '<p><strong>Note:</strong> Partial face detected</p>' : ''}
+                            ${match.is_masked ? '<p><strong>Note:</strong> Face mask detected</p>' : ''}
+                        </div>
+                    </div>
+                `;
+            });
+        } else {
+            resultsHTML += '<div class="no-matches">No matching faces found.</div>';
+        }
+    }
+
+    resultsContainer.innerHTML = resultsHTML;
+}
+
+// Add this at the beginning of your script section
+<script>
+    // Global error handler to catch unhandled errors
+    window.addEventListener('error', function(event) {
+        console.error('Global error:', event.error);
+        alert('An error occurred: ' + event.error.message);
+    });
+</script>

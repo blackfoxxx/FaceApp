@@ -1,0 +1,2499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Detection App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+    <style>
+        .face-result-container {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+        .training-results, .duplicates-results {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+.training-stats {
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #e9f7ef;
+    border-radius: 4px;
+    border-left: 4px solid #2ecc71;
+}
+.training-results, .duplicates-results {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #fff;
+}
+.duplicate-item {
+    display: flex;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.duplicate-item:last-child {
+    border-bottom: none;
+}
+
+.duplicate-images {
+    display: flex;
+    gap: 10px;
+}
+
+.duplicate-image {
+    flex: 1;
+    max-width: 150px;
+}
+
+.duplicate-image img {
+    max-width: 100%;
+    border-radius: 4px;
+}
+
+.duplicate-details {
+    flex: 2;
+    margin-left: 15px;
+}
+
+.help-text {
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 5px;
+}
+
+.section-info {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #007bff;
+}
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="file"],
+        .form-group select,
+        .form-group input[type="range"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-group input[type="range"] {
+            width: 100%;
+        }
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .button-group button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .button-group button:hover {
+            background-color: #0056b3;
+        }
+        .button-group .danger-button {
+            background-color: #e74c3c;
+        }
+        .button-group .danger-button:hover {
+            background-color: #c0392b;
+        }
+        .face-card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .face-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .face-card img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .face-card h5 {
+            margin: 5px 0;
+            color: #333;
+        }
+        .face-card p {
+            font-size: 0.9em;
+            color: #666;
+            margin: 2px 0;
+        }
+        .invalid-face {
+            border-color: #e74c3c;
+            background-color: #fdecea;
+            position: relative;
+        }
+        .invalid-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: #e74c3c;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75em;
+        }
+        .face-card .actions button {
+            background-color: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin: 2px;
+        }
+        .face-card .actions button.delete {
+            background-color: #dc3545;
+        }
+        .face-card .actions button:hover {
+            opacity: 0.9;
+        }
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .pagination button {
+            background-color: #6c757d;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        .pagination button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .pagination button.active {
+            background-color: #007bff;
+        }
+        .search-stats {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #555;
+        }
+        .range-slider {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .range-slider label {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .range-slider input[type="range"] {
+            flex: 3;
+        }
+        .range-slider span {
+            flex: 0.5;
+            text-align: right;
+        }
+        .match-results {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+        .match-result-item {
+            display: flex;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .match-result-item:last-child {
+            border-bottom: none;
+        }
+        .match-image {
+            flex: 1;
+            max-width: 150px;
+            margin-right: 15px;
+        }
+        .match-image img {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+        .match-details {
+            flex: 2;
+        }
+        .match-details h4 {
+            margin-top: 0;
+            color: #333;
+        }
+        .match-score {
+            display: inline-block;
+            padding: 3px 8px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+        .match-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ffeeba;
+        }
+        .match-twins-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 4px solid #bee5eb;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: #fff;
+            border-bottom: 1px solid #fff;
+            margin-bottom: -1px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .query-image {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .query-image img {
+            max-width: 200px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .training-results, .duplicates-results {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+        .training-stats {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #e9f7ef;
+            border-radius: 4px;
+            border-left: 4px solid #2ecc71;
+        }
+        .duplicate-item {
+            display: flex;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        .duplicate-item:last-child {
+            border-bottom: none;
+        }
+        .duplicate-images {
+            display: flex;
+            gap: 10px;
+        }
+        .duplicate-image {
+            flex: 1;
+            max-width: 150px;
+        }
+        .duplicate-image img {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+        .duplicate-details {
+            flex: 2;
+            margin-left: 15px;
+        }
+        .help-text {
+            font-size: 0.8em;
+            color: #666;
+            margin-top: 5px;
+        }
+        .section-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Face Matching Application</h1>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="upload">Upload Face</div>
+            <div class="tab" data-tab="search">Search & Browse</div>
+            <div class="tab" data-tab="match">Match Face</div>
+            <div class="tab" data-tab="videoMatch">Video Match</div>
+            <div class="tab" data-tab="videoLibrary">Video Library</div>
+            <div class="tab" data-tab="train">Train Data</div>
+            <div class="tab" data-tab="duplicates">Check Duplicate</div>
+            <div class="tab" data-tab="settings">Settings</div>
+        </div>
+
+        <!-- Train Data Section -->
+        <div id="train" class="tab-content section">
+            <h2>Train Model with Multiple Images</h2>
+            <div id="modelStats" class="section-info">
+                <h4>Current Model Statistics</h4>
+                <p>Loading model statistics...</p>
+            </div>
+            <div class="form-group">
+                <label for="trainFiles">Select Multiple Images:</label>
+                <input type="file" id="trainFiles" accept="image/*" multiple>
+                <p class="help-text">Note: Image filenames should be in format: name_xyz.jpg (e.g., john_001.jpg)</p>
+            </div>
+            <div class="form-group">
+                <label for="trainDirectory">Or Select a Folder:</label>
+                <input type="file" id="trainDirectory" webkitdirectory directory multiple>
+                <p class="help-text">Select a folder containing images to train the model</p>
+            </div>
+            <div class="form-group">
+                <label for="trainModel">Model:</label>
+                <select id="trainModel">
+                    <option value="buffalo_l">buffalo_l</option>
+                    <option value="buffalo_m">buffalo_m</option>
+                    <option value="buffalo_sc">buffalo_sc</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="trainAlignFace" checked>
+                    Align Faces
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="trainProcessAllFaces">
+                    Process All Faces in Images
+                </label>
+            </div>
+            <div class="training-stats">
+                <h4>Training Results</h4>
+                <p class="help-text">Train a model to add or update faces. Results will appear below.</p>
+            </div>
+            <div class="button-group">
+                <button id="trainBtn">Train Model</button>
+                <button id="clearTrainingBtn">Clear Training Data</button>
+            </div>
+            <div id="trainingResults" class="training-results" style="display: none;">
+                <!-- Training results will be displayed here -->
+            </div>
+        </div>
+
+        <!-- Add the Check Duplicates tab content section -->
+        <!-- Check Duplicates Section -->
+        <div id="duplicates" class="tab-content section">
+            <h2>Check for Duplicate Images</h2>
+            <div class="range-slider">
+                <label for="similarityThreshold">Similarity Threshold (%):</label>
+                <input type="range" id="similarityThreshold" min="50" max="100" step="1" value="95">
+                <span id="similarityThresholdValue">95</span>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="deleteDuplicates">
+                    Delete Duplicates Automatically (Dangerous!)
+                </label>
+            </div>
+            <div class="button-group">
+                <button id="checkDuplicatesBtn">Check Duplicates</button>
+                <button id="deleteSelectedDuplicatesBtn" class="danger-button" style="display: none;">Delete Selected</button>
+            </div>
+            <div id="duplicatesResults" class="duplicates-results" style="display: none;">
+                <!-- Duplicates results will be displayed here -->
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div id="settings" class="tab-content section">
+            <h2>Application Settings</h2>
+            <div class="form-group">
+                <label for="defaultModel">Default Model:</label>
+                <select id="defaultModel">
+                    <option value="buffalo_l">buffalo_l (Large - Highest Accuracy)</option>
+                    <option value="buffalo_m">buffalo_m (Medium - Balanced)</option>
+                    <option value="buffalo_sc">buffalo_sc (Small - Fastest)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="processingMode">Processing Mode:</label>
+                <select id="processingMode">
+                    <option value="gpu">GPU (Faster)</option>
+                    <option value="cpu" selected>CPU (Compatible with all systems)</option>
+                </select>
+            </div>
+            <div class="button-group">
+                <button id="saveSettingsBtn">Save Settings</button>
+                <button id="clearAllDataBtn" class="danger-button">Clear All Data</button>
+            </div>
+            <div class="settings-info" style="margin-top: 20px;">
+                <h4>Current Settings:</h4>
+                <p>Model: <span id="currentModel">buffalo_l</span></p>
+                <p>Processing Mode: <span id="currentProcessingMode">CPU</span></p>
+            </div>
+        </div>
+
+        <!-- Upload Face Section -->
+        <div id="upload" class="tab-content section active">
+            <h2>Upload New Face</h2>
+            <div class="form-group">
+                <label for="faceName">Face Name:</label>
+                <input type="text" id="faceName" placeholder="Enter name for the face">
+            </div>
+            <div class="form-group">
+                <label for="faceImage">Face Image:</label>
+                <input type="file" id="faceImage" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label for="uploadModel">Model:</label>
+                <select id="uploadModel">
+                    <option value="buffalo_l">buffalo_l</option>
+                    <option value="buffalo_m">buffalo_m</option>
+                    <option value="buffalo_sc">buffalo_sc</option>
+                </select>
+            </div>
+            <div class="button-group">
+                <button id="uploadBtn">Upload Face</button>
+            </div>
+        </div>
+
+        <!-- Search & Browse Faces Section -->
+        <div id="search" class="tab-content section">
+            <h2>Search & Browse Faces</h2>
+            <div class="form-group">
+                <label for="searchQuery">Search by Name:</label>
+                <input type="text" id="searchQuery" placeholder="Enter face name or part of it">
+            </div>
+            <div class="form-group">
+                <label for="searchModel">Search Model:</label>
+                <select id="searchModel">
+                    <option value="buffalo_l">buffalo_l</option>
+                    <option value="buffalo_m">buffalo_m</option>
+                    <option value="buffalo_sc">buffalo_sc</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="hideInvalidToggle">
+                    Hide Invalid (missing/placeholder images)
+                </label>
+            </div>
+            <div class="range-slider">
+                <label for="cosineWeight">Cosine Weight:</label>
+                <input type="range" id="cosineWeight" min="0" max="1" step="0.01" value="0.5">
+                <span id="cosineWeightValue">0.50</span>
+            </div>
+            <div class="range-slider">
+                <label for="l2Weight">L2 Weight:</label>
+                <input type="range" id="l2Weight" min="0" max="1" step="0.01" value="0.5">
+                <span id="l2WeightValue">0.50</span>
+            </div>
+            <div class="button-group">
+                <button id="searchBtn">Search Faces</button>
+                <button id="clearSearchBtn">Clear Search</button>
+            </div>
+            <div id="searchStats" class="search-stats"></div>
+            <div id="searchResults" class="face-card-container">
+                <!-- Search results will be displayed here -->
+            </div>
+            <div class="button-group">
+                <button id="deleteSelectedInvalidBtn" style="display:none;">Delete Selected Invalid</button>
+                <button id="deleteAllInvalidBtn" style="display:none;">Delete All Invalid</button>
+            </div>
+            <div id="pagination" class="pagination">
+                <!-- Pagination buttons will be displayed here -->
+            </div>
+        </div>
+
+        <!-- Match Face Section -->
+        <div id="match" class="tab-content section">
+            <h2>Match Face</h2>
+            <div class="form-group">
+                <label for="matchImage">Upload Face to Match:</label>
+                <input type="file" id="matchImage" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label for="matchModel">Model:</label>
+                <select id="matchModel">
+                    <option value="buffalo_l">buffalo_l</option>
+                    <option value="buffalo_m">buffalo_m</option>
+                    <option value="buffalo_sc">buffalo_sc</option>
+                </select>
+            </div>
+            <div class="range-slider">
+                <label for="matchThreshold">Match Threshold:</label>
+                <input type="range" id="matchThreshold" min="0" max="1" step="0.01" value="0.4">
+                <span id="matchThresholdValue">0.40</span>
+            </div>
+            <div class="range-slider">
+                <label for="matchCosineWeight">Cosine Weight:</label>
+                <input type="range" id="matchCosineWeight" min="0" max="1" step="0.01" value="0.7">
+                <span id="matchCosineWeightValue">0.70</span>
+            </div>
+            <div class="range-slider">
+                <label for="matchL2Weight">L2 Weight:</label>
+                <input type="range" id="matchL2Weight" min="0" max="1" step="0.01" value="0.3">
+                <span id="matchL2WeightValue">0.30</span>
+            </div>
+            <div class="form-group">
+                <label for="enhanceLevel">Image Enhancement:</label>
+                <select id="enhanceLevel">
+                    <option value="none">None</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="alignFace" checked>
+                    Align Face
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="processAllFaces">
+                    Process All Faces in Image
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="detectMaskedPartial">
+                    Detect Masked or Partial Faces
+                </label>
+            </div>
+            <div class="button-group">
+                <button id="matchBtn">Match Face</button>
+                <button id="clearMatchBtn">Clear Results</button>
+            </div>
+            <div id="matchResults" class="match-results" style="display: none;">
+                <!-- Match results will be displayed here -->
+            </div>
+        </div>
+
+        <!-- Video Match Section -->
+        <div id="videoMatch" class="tab-content section">
+            <h2>Match Face in Video</h2>
+            <div class="form-group">
+                <label for="videoFile">Upload Video:</label>
+                <input type="file" id="videoFile" accept="video/*">
+            </div>
+            <div class="form-group">
+                <label for="videoModel">Model:</label>
+                <select id="videoModel">
+                    <option value="buffalo_l">buffalo_l</option>
+                    <option value="buffalo_m">buffalo_m</option>
+                    <option value="buffalo_sc">buffalo_sc</option>
+                </select>
+            </div>
+            <div class="range-slider">
+                <label for="videoThreshold">Match Threshold:</label>
+                <input type="range" id="videoThreshold" min="0" max="1" step="0.01" value="0.5">
+                <span id="videoThresholdValue">0.50</span>
+            </div>
+            <div class="range-slider">
+                <label for="minQuality">Minimum Face Quality (Extraction):</label>
+                <input type="range" id="minQuality" min="0" max="1" step="0.01" value="0.65">
+                <span id="minQualityValue">0.65</span>
+            </div>
+            <div class="form-group">
+                <label for="frameInterval">Frame Interval (Process every N frames):</label>
+                <input type="number" id="frameInterval" value="30" min="1">
+                <p class="help-text">Higher values process faster but might miss faces. Lower values are slower/more accurate.</p>
+            </div>
+            <div class="button-group">
+                <button id="videoMatchBtn">Extract Faces</button>
+            </div>
+            <div id="videoExtractionResults" class="match-results" style="display: none;">
+                <!-- Extracted faces will be displayed here -->
+            </div>
+            <div id="videoMatchResults" class="match-results" style="display: none;">
+                <!-- Match results will be displayed here -->
+            </div>
+        </div>
+
+        <div id="videoLibrary" class="tab-content section">
+            <h2>Extracted Faces Library</h2>
+            <div class="button-group">
+                <button id="refreshLibraryBtn" class="button-primary">Refresh Library</button>
+            </div>
+            
+            <div id="libraryMatchResults" style="display:none; margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; background: #f8f9fa; border-radius: 5px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="margin: 0;">Search Results</h3>
+                    <button onclick="closeLibraryMatch()" class="button-secondary small-btn">Close</button>
+                </div>
+                <div id="libraryMatchContent" class="video-faces-row" style="flex-wrap: wrap;"></div>
+            </div>
+
+            <div id="videoLibraryContent">
+                <p>Loading library...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables for search state
+        let currentPage = 1;
+        let currentSearchQuery = '';
+        let currentSearchModel = 'buffalo_l';
+        const resultsPerPage = 50;
+        let currentJobId = null;
+        let duplicateCheckInterval = null;
+
+        // Event listener for DOMContentLoaded to initialize search and other functionalities
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tabs
+            initializeTabs();
+            
+            // Initialize search functionality
+            initializeSearch();
+        
+            // Initialize match functionality
+            initializeMatch();
+
+            // Initialize video match functionality
+            initializeVideoMatch();
+            
+            // Initialize video library functionality
+            initializeVideoLibrary();
+        
+            // Initialize train functionality
+            initializeTrain();
+        
+            // Initialize check duplicates functionality
+            initializeCheckDuplicates();
+        
+            // Initialize settings functionality
+            initializeSettings();
+        
+            // Update range slider value displays
+            initializeRangeSliders();
+        
+            // Upload functionality
+            document.getElementById('uploadBtn').addEventListener('click', uploadFace);
+        });
+        
+        function initializeTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs and tab contents
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Show corresponding tab content
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+        
+        // Add to the initializeRangeSliders function
+        function initializeRangeSliders() {
+            // Existing sliders code...
+            
+            // Duplicates slider
+            const similarityThresholdSlider = document.getElementById('similarityThreshold');
+            const similarityThresholdValueSpan = document.getElementById('similarityThresholdValue');
+            
+            similarityThresholdSlider.oninput = function() {
+                similarityThresholdValueSpan.textContent = this.value;
+            };
+        }
+        
+        function initializeTrain() {
+            const trainBtn = document.getElementById('trainBtn');
+            const clearTrainingBtn = document.getElementById('clearTrainingBtn');
+            const trainModelSelect = document.getElementById('trainModel');
+            
+            // Fetch and display initial model statistics
+            fetchModelStats(trainModelSelect.value);
+            
+            // Update statistics when model selection changes
+            trainModelSelect.addEventListener('change', function() {
+                fetchModelStats(this.value);
+            });
+            
+            // Add tab change listener to update stats when tab is selected
+            document.querySelector('.tab[data-tab="train"]').addEventListener('click', function() {
+                fetchModelStats(trainModelSelect.value);
+            });
+            
+            trainBtn.addEventListener('click', performTraining);
+            clearTrainingBtn.addEventListener('click', clearTrainingData);
+        }
+        
+        function performTraining() {
+            const trainFiles = document.getElementById('trainFiles').files;
+            const trainDirectory = document.getElementById('trainDirectory').files;
+            
+            // Check if either individual files or directory files are selected
+            if (trainFiles.length === 0 && trainDirectory.length === 0) {
+                alert('Please select either individual image files or a folder containing images for training.');
+                return;
+            }
+            
+            const model = document.getElementById('trainModel').value;
+            const alignFace = document.getElementById('trainAlignFace').checked;
+            const processAllFaces = document.getElementById('trainProcessAllFaces').checked;
+            
+            const formData = new FormData();
+            
+            // Add files from individual selection
+            for (let i = 0; i < trainFiles.length; i++) {
+                formData.append('files', trainFiles[i]);
+            }
+            
+            // Add files from directory selection
+            for (let i = 0; i < trainDirectory.length; i++) {
+                // Only include image files
+                if (trainDirectory[i].type.startsWith('image/')) {
+                    formData.append('files', trainDirectory[i]);
+                }
+            }
+            
+            formData.append('model', model);
+            formData.append('align', alignFace.toString());
+            formData.append('process_all_faces', processAllFaces.toString());
+            
+            // Show loading indicator
+            const resultsContainer = document.getElementById('trainingResults');
+            resultsContainer.style.display = 'block';
+            resultsContainer.innerHTML = '<p>Processing images... This may take a moment.</p>';
+            
+            fetch('/train_model', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                displayTrainingResults(data);
+            })
+            .catch(error => {
+                console.error('Training error:', error);
+                resultsContainer.innerHTML = `<div class="match-warning">Training failed: ${error.message}</div>`;
+            });
+        }
+        
+        function displayTrainingResults(data) {
+            const resultsContainer = document.getElementById('trainingResults');
+            
+            // Add debugging to console
+            console.log('Training results data:', data);
+            
+            // Check if data has the expected properties
+            const processed = data.processed !== undefined ? data.processed : 'undefined';
+            const faces_added = data.faces_added !== undefined ? data.faces_added : 'undefined';
+            const skipped = data.skipped !== undefined ? data.skipped : 'undefined';
+            const processing_time = data.processing_time !== undefined ? data.processing_time : 'undefined';
+            const faces_before = data.faces_before !== undefined ? data.faces_before : 'undefined';
+            const faces_after = data.faces_after !== undefined ? data.faces_after : 'undefined';
+            const unique_names_before = data.unique_names_before !== undefined ? data.unique_names_before : 'undefined';
+            const unique_names_after = data.unique_names_after !== undefined ? data.unique_names_after : 'undefined';
+            const new_unique_names = data.new_unique_names !== undefined ? data.new_unique_names : 'undefined';
+            
+            let resultsHTML = `
+            <div class="training-stats">
+                <h4>Training Results</h4>
+                <p>Total images processed: ${processed}</p>
+                <p>Faces successfully added: ${faces_added}</p>
+                <p>Images skipped: ${skipped}</p>
+                <p>Processing time: ${processing_time} seconds</p>
+                <h4>Model Statistics</h4>
+                <p>Faces before training: ${faces_before}</p>
+                <p>Faces after training: ${faces_after}</p>
+                <p>Unique identities before: ${unique_names_before}</p>
+                <p>Unique identities after: ${unique_names_after}</p>
+                <p>New unique identities added: ${new_unique_names}</p>
+            </div>
+            `;
+            
+            resultsContainer.innerHTML = resultsHTML;
+            resultsContainer.style.display = 'block';
+            
+            // Refresh model statistics after training
+            const modelName = document.getElementById('trainModel').value;
+            fetchModelStats(modelName);
+        }
+        
+        function clearTrainingData() {
+            if (!confirm('Are you sure you want to clear all training data for the selected model? This action cannot be undone.')) {
+                return;
+            }
+            
+            const model = document.getElementById('trainModel').value;
+            
+            fetch('/clear_training_data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ model: model })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    document.getElementById('trainingResults').style.display = 'none';
+                    // Refresh model statistics after clearing data
+                    fetchModelStats(model);
+                } else {
+                    alert('Failed to clear training data: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error clearing training data:', error);
+                alert('Failed to clear training data: ' + error.message);
+            });
+        }
+        
+        function initializeCheckDuplicates() {
+            const checkDuplicatesBtn = document.getElementById('checkDuplicatesBtn');
+            checkDuplicatesBtn.addEventListener('click', checkDuplicates);
+        }
+        
+        function fetchModelStats(modelName) {
+            const statsContainer = document.getElementById('modelStats');
+            statsContainer.innerHTML = '<h4>Current Model Statistics</h4><p>Loading model statistics...</p>';
+            
+            fetch('/get_training_stats')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayModelStats(data.stats, modelName);
+                    } else {
+                        statsContainer.innerHTML = '<h4>Current Model Statistics</h4><p>Error loading statistics: ' + data.error + '</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching model statistics:', error);
+                    statsContainer.innerHTML = '<h4>Current Model Statistics</h4><p>Error loading statistics: ' + error.message + '</p>';
+                });
+        }
+        
+        function displayModelStats(stats, modelName) {
+            const statsContainer = document.getElementById('modelStats');
+            const modelStats = stats[modelName];
+            
+            if (modelStats) {
+                statsContainer.innerHTML = `
+                    <h4>Current Model Statistics</h4>
+                    <p><strong>Model:</strong> ${modelName}</p>
+                    <p><strong>Total Faces:</strong> ${modelStats.total_faces}</p>
+                    <p><strong>Unique People:</strong> ${modelStats.unique_people}</p>
+                `;
+            } else {
+                statsContainer.innerHTML = `
+                    <h4>Current Model Statistics</h4>
+                    <p><strong>Model:</strong> ${modelName}</p>
+                    <p>No statistics available for this model.</p>
+                `;
+            }
+        }
+        
+        function initializeSettings() {
+            const defaultModelSelect = document.getElementById('defaultModel');
+            const processingModeSelect = document.getElementById('processingMode');
+            const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+            const clearAllDataBtn = document.getElementById('clearAllDataBtn');
+            
+            // Set initial values based on current settings
+            defaultModelSelect.value = currentSearchModel;
+            
+            // Update display of current settings
+            document.getElementById('currentModel').textContent = currentSearchModel;
+            document.getElementById('currentProcessingMode').textContent = 
+                processingModeSelect.value === 'gpu' ? 'GPU' : 'CPU';
+            
+            saveSettingsBtn.addEventListener('click', function() {
+                // Save model selection
+                const newModel = defaultModelSelect.value;
+                switchModel(newModel);
+                
+                // Save processing mode
+                const newProcessingMode = processingModeSelect.value;
+                switchProcessingMode(newProcessingMode);
+            });
+
+            clearAllDataBtn.addEventListener('click', clearAllData);
+        }
+
+        function clearAllData() {
+            if (!confirm('This will remove all stored faces and images across every model. Continue?')) {
+                return;
+            }
+
+            fetch('/clear_all_data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('All data cleared successfully.');
+
+                    const trainModelSelect = document.getElementById('trainModel');
+                    if (trainModelSelect) {
+                        fetchModelStats(trainModelSelect.value);
+                    }
+
+                    if (typeof performSearch === 'function') {
+                        performSearch(1);
+                    }
+
+                    const trainingResults = document.getElementById('trainingResults');
+                    if (trainingResults) {
+                        trainingResults.style.display = 'none';
+                        trainingResults.innerHTML = '';
+                    }
+
+                    const matchResults = document.getElementById('matchResults');
+                    if (matchResults) {
+                        matchResults.style.display = 'none';
+                        matchResults.innerHTML = '';
+                    }
+                } else {
+                    alert('Failed to clear data: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error clearing all data:', error);
+                alert('Failed to clear data: ' + error.message);
+            });
+        }
+        
+        function switchModel(modelName) {
+            fetch('/switch_model', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ model: modelName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentSearchModel = modelName;
+                    // Update all model selects to match the new default
+                    document.querySelectorAll('select[id$="Model"]').forEach(select => {
+                        select.value = modelName;
+                    });
+                    document.getElementById('currentModel').textContent = modelName;
+                    alert('Model switched successfully to ' + data.description);
+                } else {
+                    alert('Failed to switch model: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error switching model:', error);
+                alert('Failed to switch model: ' + error.message);
+            });
+        }
+        
+        function switchProcessingMode(mode) {
+            fetch('/switch_processing_mode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ mode: mode })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('currentProcessingMode').textContent = 
+                        mode === 'gpu' ? 'GPU' : 'CPU';
+                    alert('Processing mode switched to ' + data.description);
+                } else {
+                    alert('Failed to switch processing mode: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error switching processing mode:', error);
+                alert('Failed to switch processing mode: ' + error.message);
+            });
+        }
+        
+        function checkDuplicates() {
+            const checkBtn = document.getElementById('checkDuplicatesBtn');
+            
+            // If already running (btn says Cancel), then cancel
+            if (currentJobId) {
+                cancelDuplicateScan();
+                return;
+            }
+
+            const threshold = document.getElementById('similarityThreshold').value;
+            const deleteDuplicates = document.getElementById('deleteDuplicates').checked;
+            
+            const data = {
+                threshold: threshold,
+                delete: deleteDuplicates
+            };
+            
+            // Show loading indicator
+            const resultsContainer = document.getElementById('duplicatesResults');
+            resultsContainer.style.display = 'block';
+            resultsContainer.innerHTML = '<p>Starting duplicate scan... <span id="scanProgress">0%</span></p>';
+            
+            // Disable inputs
+            document.getElementById('similarityThreshold').disabled = true;
+            document.getElementById('deleteDuplicates').disabled = true;
+            checkBtn.textContent = 'Cancel Scan';
+            checkBtn.classList.add('danger-button');
+            
+            fetch('/start_duplicate_scan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentJobId = data.job_id;
+                    pollDuplicateStatus(data.job_id);
+                } else {
+                    throw new Error(data.error || 'Failed to start scan');
+                }
+            })
+            .catch(error => {
+                console.error('Check duplicates error:', error);
+                resultsContainer.innerHTML = `<div class="match-warning">Check duplicates failed: ${error.message}</div>`;
+                resetDuplicateUI();
+            });
+        }
+        
+        function pollDuplicateStatus(jobId) {
+            duplicateCheckInterval = setInterval(() => {
+                fetch(`/duplicate_status/${jobId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const job = data.job;
+                        const percent = job.total > 0 ? Math.round((job.processed / job.total) * 100) : 0;
+                        const progressSpan = document.getElementById('scanProgress');
+                        if (progressSpan) progressSpan.textContent = `${percent}% (${job.processed}/${job.total})`;
+                        
+                        if (job.status === 'completed' || job.status === 'canceled') {
+                            clearInterval(duplicateCheckInterval);
+                            duplicateCheckInterval = null;
+                            currentJobId = null;
+                            
+                            // Map job result to display format
+                            const displayData = {
+                                total_images: job.total,
+                                unique_images: job.unique,
+                                duplicates_found: job.duplicates_found,
+                                duplicates_removed: job.removed,
+                                duplicates: job.duplicates,
+                                removed_files: [] // We don't get full list of removed files in job status yet, but that's ok
+                            };
+                            
+                            displayDuplicatesResults(displayData);
+                            resetDuplicateUI();
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Poll error:', error);
+                    clearInterval(duplicateCheckInterval);
+                    duplicateCheckInterval = null;
+                    currentJobId = null;
+                    resetDuplicateUI();
+                });
+            }, 1000);
+        }
+
+        function cancelDuplicateScan() {
+            if (!currentJobId) return;
+            
+            fetch(`/duplicate_cancel/${currentJobId}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Scan canceled');
+                // Polling loop will catch the 'canceled' status and cleanup
+            })
+            .catch(error => console.error('Cancel error:', error));
+        }
+
+        function resetDuplicateUI() {
+            document.getElementById('similarityThreshold').disabled = false;
+            document.getElementById('deleteDuplicates').disabled = false;
+            const checkBtn = document.getElementById('checkDuplicatesBtn');
+            checkBtn.textContent = 'Check Duplicates';
+            checkBtn.classList.remove('danger-button');
+            currentJobId = null;
+        }
+        
+        function markInvalidImage(img, containerSelector, label) {
+            try {
+                img.onerror = null;
+                img.src = '/static/images/placeholder.png';
+                img.alt = 'Invalid image';
+                const container = img.closest(containerSelector || '.face-card, .match-result-item, .duplicate-item');
+                if (container) {
+                    container.classList.add('invalid-face');
+                    if (!container.querySelector('.invalid-badge')) {
+                        const badge = document.createElement('div');
+                        badge.className = 'invalid-badge';
+                        badge.textContent = label || 'Invalid Data';
+                        container.appendChild(badge);
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function displayDuplicatesResults(data) {
+            const resultsContainer = document.getElementById('duplicatesResults');
+            const deleteSelectedBtn = document.getElementById('deleteSelectedDuplicatesBtn');
+            
+            let resultsHTML = `
+            <div class="training-stats">
+                <h4>Duplicate Check Results</h4>
+                <p>Total images scanned: ${data.total_images}</p>
+                <p>Unique images found: ${data.unique_images}</p>
+                <p>Duplicates found: ${data.duplicates_found}</p>
+                ${data.duplicates_removed > 0 ? `<p>Duplicates removed: ${data.duplicates_removed}</p>` : ''}
+            </div>
+            `;
+            
+            if (data.duplicates && data.duplicates.length > 0) {
+                // Show delete button and selection controls
+                if (deleteSelectedBtn) {
+                    deleteSelectedBtn.style.display = 'inline-block';
+                }
+
+                resultsHTML += `
+                <h4>Duplicate Images</h4>
+                <div class="duplicates-actions" style="margin-bottom: 10px;">
+                    <button onclick="toggleAllDuplicates(true)" class="secondary-button">Select All</button>
+                    <button onclick="toggleAllDuplicates(false)" class="secondary-button">Deselect All</button>
+                </div>
+                `;
+                
+                data.duplicates.forEach((duplicate, index) => {
+                    const similarityPercent = Math.round(duplicate.similarity);
+                    const isRemoved = data.duplicates_removed > 0 && data.removed_files.includes(duplicate.file);
+                    
+                    resultsHTML += `
+                    <div class="duplicate-item" id="dup-row-${index}">
+                        <div class="duplicate-checkbox" style="display: flex; align-items: center; justify-content: center; padding: 10px;">
+                            ${!isRemoved ? `<input type="checkbox" class="duplicate-select" value="${duplicate.file}" id="cb-${index}">` : ''}
+                        </div>
+                        <div class="duplicate-images">
+                            <div class="duplicate-image">
+                                <img src="${duplicate.file_url || '/static/images/' + duplicate.file}" alt="Duplicate" onerror="markInvalidImage(this, '.duplicate-item', 'Invalid Image')" loading="lazy">
+                                <p>Duplicate</p>
+                            </div>
+                            <div class="duplicate-image">
+                                <img src="${duplicate.duplicate_of_url || '/static/images/' + duplicate.duplicate_of}" alt="Original" onerror="markInvalidImage(this, '.duplicate-item', 'Invalid Image')" loading="lazy">
+                                <p>Original</p>
+                            </div>
+                        </div>
+                        <div class="duplicate-details">
+                            <h5>Similarity: ${similarityPercent}%</h5>
+                            <p>Duplicate file: ${duplicate.file}</p>
+                            <p>Original file: ${duplicate.duplicate_of}</p>
+                            ${isRemoved ? '<p><strong>Status:</strong> Removed</p>' : ''}
+                        </div>
+                    </div>
+                    `;
+                });
+            } else {
+                resultsHTML += '<p>No duplicate images found.</p>';
+                if (deleteSelectedBtn) {
+                    deleteSelectedBtn.style.display = 'none';
+                }
+            }
+            
+            resultsContainer.innerHTML = resultsHTML;
+        }
+
+        // New functions for manual deletion
+        function toggleAllDuplicates(checked) {
+            const checkboxes = document.querySelectorAll('.duplicate-select');
+            checkboxes.forEach(cb => cb.checked = checked);
+        }
+
+        document.getElementById('deleteSelectedDuplicatesBtn').addEventListener('click', function() {
+            const checkboxes = document.querySelectorAll('.duplicate-select:checked');
+            if (checkboxes.length === 0) {
+                alert('Please select at least one duplicate to delete.');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete ${checkboxes.length} selected files? This cannot be undone.`)) {
+                return;
+            }
+            
+            const filesToDelete = Array.from(checkboxes).map(cb => cb.value);
+            
+            // Show loading state
+            this.textContent = 'Deleting...';
+            this.disabled = true;
+            
+            fetch('/delete_selected_duplicates', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ files: filesToDelete })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Successfully deleted ${data.removed_count} files.`);
+                    // Remove deleted items from UI or mark them
+                    checkboxes.forEach(cb => {
+                        const row = cb.closest('.duplicate-item');
+                        if (row) {
+                            row.querySelector('.duplicate-checkbox').innerHTML = ''; // Remove checkbox
+                            const details = row.querySelector('.duplicate-details');
+                            details.innerHTML += '<p><strong>Status:</strong> Removed</p>';
+                            row.style.opacity = '0.7';
+                        }
+                    });
+                    
+                    // Update count or hide button if all handled
+                    const remaining = document.querySelectorAll('.duplicate-select');
+                    if (remaining.length === 0) {
+                        this.style.display = 'none';
+                    }
+                } else {
+                    alert('Error deleting files: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Delete error:', error);
+                alert('Failed to delete files. See console for details.');
+            })
+            .finally(() => {
+                this.textContent = 'Delete Selected';
+                this.disabled = false;
+            });
+        });
+        
+        function uploadFace() {
+            const faceName = document.getElementById('faceName').value;
+            const faceImage = document.getElementById('faceImage').files[0];
+            const model = document.getElementById('uploadModel').value;
+
+            if (!faceName || !faceImage) {
+                alert('Please provide both a name and an image for the face.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('name', faceName);
+            formData.append('file', faceImage);
+            formData.append('model', model);
+
+            fetch('/add_face', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Face uploaded successfully!');
+                    document.getElementById('faceName').value = '';
+                    document.getElementById('faceImage').value = '';
+                    performSearch(1); // Refresh search results
+                } else {
+                    alert('Upload failed: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Upload error:', error);
+                alert('Upload failed: ' + error.message);
+            });
+        }
+
+        function initializeSearch() {
+            const searchBtn = document.getElementById('searchBtn');
+            const clearSearchBtn = document.getElementById('clearSearchBtn');
+            const searchQuery = document.getElementById('searchQuery');
+            const hideInvalidToggle = document.getElementById('hideInvalidToggle');
+            hideInvalidToggle.addEventListener('change', function() { performSearch(1); });
+
+            searchBtn.addEventListener('click', function() { performSearch(1); });
+            clearSearchBtn.addEventListener('click', clearSearch);
+
+            // Search on Enter key
+            searchQuery.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch(1);
+                }
+            });
+
+            // Load initial results
+            performSearch(1);
+        }
+
+        function performSearch(page = 1) {
+            const searchQuery = document.getElementById('searchQuery').value;
+            const searchModel = document.getElementById('searchModel').value;
+            const cosineWeight = document.getElementById('cosineWeight').value;
+            const l2Weight = document.getElementById('l2Weight').value;
+            const hideInvalid = document.getElementById('hideInvalidToggle').checked;
+
+            currentPage = page;
+            currentSearchQuery = searchQuery;
+            currentSearchModel = searchModel;
+
+            const searchData = {
+                query: searchQuery,
+                model: searchModel,
+                cosine_weight: parseFloat(cosineWeight),
+                l2_weight: parseFloat(l2Weight),
+                limit: resultsPerPage,
+                offset: (page - 1) * resultsPerPage,
+                hide_invalid: hideInvalid
+            };
+
+            fetch('/search_faces', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(searchData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displaySearchResults(data);
+                    updatePagination(data);
+                    updateSearchStats(data);
+                } else {
+                    alert('Search failed: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                alert('Search failed: ' + error.message);
+            });
+        }
+
+        function displaySearchResults(data) {
+            const resultsContainer = document.getElementById('searchResults');
+            if (data.results.length === 0) {
+                resultsContainer.innerHTML = '<p>No faces found matching your search criteria.</p>';
+                return;
+            }
+
+            const deleteInvalidBtn = document.getElementById('deleteSelectedInvalidBtn');
+            const deleteAllInvalidBtn = document.getElementById('deleteAllInvalidBtn');
+            const resultsHTML = data.results.map(face => `
+                <div class="face-card ${face.is_invalid ? 'invalid-face' : ''}">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <img src="${face.image_path}" alt="${face.name}" onerror="markInvalidImage(this, '.face-card', 'Invalid Data')" loading="lazy" style="max-width:70%;">
+                        ${face.is_invalid ? '<input type="checkbox" class="invalid-select" value="'+face.id+'" title="Select invalid">' : ''}
+                    </div>
+                    <h5>${face.name}</h5>
+                    <p>ID: ${face.id}</p>
+                    <p>Added: ${new Date(face.created_at).toLocaleDateString()}</p>
+                    <div class="actions">
+                        <button onclick="viewFaceDetails('${face.id}')">View</button>
+                        <button class="delete" onclick="deleteFace('${face.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+            resultsContainer.innerHTML = resultsHTML;
+            
+            // Show/hide bulk delete invalid button
+            const anyInvalid = data.results.some(r => r.is_invalid);
+            deleteInvalidBtn.style.display = anyInvalid ? 'inline-block' : 'none';
+            deleteAllInvalidBtn.style.display = anyInvalid ? 'inline-block' : 'none';
+        }
+        
+        // Bulk delete selected invalid
+        document.getElementById('deleteSelectedInvalidBtn').addEventListener('click', function() {
+            const selected = Array.from(document.querySelectorAll('.invalid-select:checked')).map(cb => parseInt(cb.value, 10));
+            if (selected.length === 0) {
+                alert('Please select invalid faces to delete.');
+                return;
+            }
+            if (!confirm(`Delete ${selected.length} invalid faces? This cannot be undone.`)) return;
+            
+            this.textContent = 'Deleting...';
+            this.disabled = true;
+            fetch('/delete_invalid_faces', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: selected })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Deleted ${data.removed_count} invalid faces.`);
+                    // Refresh search
+                    performSearch(currentPage);
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown'));
+                }
+            })
+            .catch(err => {
+                console.error('Bulk delete invalid error:', err);
+                alert('Bulk delete failed');
+            })
+            .finally(() => {
+                this.textContent = 'Delete Selected Invalid';
+                this.disabled = false;
+            });
+        });
+        
+        // Delete all invalid across current model
+        document.getElementById('deleteAllInvalidBtn').addEventListener('click', function() {
+            if (!confirm('Delete ALL invalid faces for current model? This cannot be undone.')) return;
+            this.textContent = 'Deleting...';
+            this.disabled = true;
+            const model = document.getElementById('searchModel').value;
+            fetch('/delete_all_invalid', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Deleted ${data.removed_count} invalid faces.`);
+                    performSearch(currentPage);
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown'));
+                }
+            })
+            .catch(err => {
+                console.error('Delete all invalid error:', err);
+                alert('Delete all invalid failed');
+            })
+            .finally(() => {
+                this.textContent = 'Delete All Invalid';
+                this.disabled = false;
+            });
+        });
+
+        function updatePagination(data) {
+            const paginationContainer = document.getElementById('pagination');
+            if (data.total_pages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+            // Previous button
+            paginationHTML += `<button ${data.current_page === 1 ? 'disabled' : ''} onclick="performSearch(${data.current_page - 1})">Previous</button>`;
+
+            // Page numbers
+            for (let i = 1; i <= data.total_pages; i++) {
+                if (i === data.current_page) {
+                    paginationHTML += `<button class="active">${i}</button>`;
+                } else if (i === 1 || i === data.current_page - 1 || i === data.current_page + 1 || i === data.total_pages) {
+                    paginationHTML += `<button onclick="performSearch(${i})">${i}</button>`;
+                } else if (i === data.current_page - 2 || i === data.current_page + 2) {
+                    paginationHTML += `<span>...</span>`;
+                }
+            }
+
+            // Next button
+            paginationHTML += `<button ${data.current_page === data.total_pages ? 'disabled' : ''} onclick="performSearch(${data.current_page + 1})">Next</button>`;
+            paginationContainer.innerHTML = paginationHTML;
+        }
+
+        function updateSearchStats(data) {
+            const statsContainer = document.getElementById('searchStats');
+            const start = (data.current_page - 1) * resultsPerPage + 1;
+            const end = Math.min(start + resultsPerPage - 1, data.total_count);
+            const invalidCount = Array.isArray(data.results) ? data.results.filter(r => r.is_invalid).length : 0;
+            statsContainer.innerHTML = `Showing ${start}-${end} of ${data.total_count} faces — Invalid on this page: ${invalidCount}`;
+        }
+
+        function clearSearch() {
+            document.getElementById('searchQuery').value = '';
+            performSearch(1);
+        }
+
+        function initializeMatch() {
+            const matchBtn = document.getElementById('matchBtn');
+            const clearMatchBtn = document.getElementById('clearMatchBtn');
+
+            matchBtn.addEventListener('click', performMatch);
+            clearMatchBtn.addEventListener('click', clearMatch);
+        }
+
+        function performMatch() {
+            const matchImage = document.getElementById('matchImage').files[0];
+            if (!matchImage) {
+                alert('Please select an image to match.');
+                return;
+            }
+
+            const model = document.getElementById('matchModel').value;
+            const threshold = document.getElementById('matchThreshold').value;
+            const cosineWeight = document.getElementById('matchCosineWeight').value;
+            const l2Weight = document.getElementById('matchL2Weight').value;
+            const enhanceLevel = document.getElementById('enhanceLevel').value;
+            const alignFace = document.getElementById('alignFace').checked;
+            const processAllFaces = document.getElementById('processAllFaces').checked;
+            const detectMaskedPartial = document.getElementById('detectMaskedPartial').checked;
+
+            const formData = new FormData();
+            formData.append('file', matchImage);
+            formData.append('model', model);
+            formData.append('threshold', threshold);
+            formData.append('cosine_weight', cosineWeight);
+            formData.append('l2_weight', l2Weight);
+            formData.append('enhance', enhanceLevel);
+            formData.append('align', alignFace.toString());
+            formData.append('process_all_faces', processAllFaces.toString());
+            formData.append('detect_masked_partial', detectMaskedPartial.toString());
+
+            fetch('/match_face', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayMatchResults(data);
+            })
+            .catch(error => {
+                console.error('Match error:', error);
+                alert('Match failed: ' + error.message);
+            });
+        }
+
+        function displayMatchResults(data) {
+            const resultsContainer = document.getElementById('matchResults');
+            resultsContainer.style.display = 'block';
+
+            if (data.error) {
+                resultsContainer.innerHTML = `<div class="match-warning">${data.error}</div>`;
+                return;
+            }
+
+            let resultsHTML = '';
+
+            // Check if we're dealing with multiple faces or single face
+            if (data.face_results && data.face_results.length > 0) {
+                // Multiple faces mode
+                resultsHTML += `
+                    <div class="summary-info">
+                        <h3>Multiple Faces Detected</h3>
+                        <p>Found ${data.faces_found} faces, processed ${data.faces_processed} faces</p>
+                    </div>
+                `;
+
+                // Add timing information
+                resultsHTML += `
+                    <div class="timing-info">
+                        <p>Model: ${data.model} | Threshold: ${data.threshold}</p>
+                    </div>
+                `;
+
+                // Process each face result
+                data.face_results.forEach((faceResult, index) => {
+                    resultsHTML += `
+                        <div class="face-result">
+                            <h3>Face #${faceResult.face_index}</h3>
+                            <div class="query-image">
+                                <img src="${faceResult.query_image_url}" alt="Face ${faceResult.face_index}" loading="lazy">
+                            </div>
+                            <div class="face-details">
+                                <p>Detection Score: ${Math.round(faceResult.detection_score * 100)}%</p>
+                                <p>Quality Score: ${Math.round(faceResult.quality_score * 100)}%</p>
+                                ${faceResult.is_partial ? '<p><strong>Note:</strong> Partial face detected</p>' : ''}
+                                ${faceResult.is_masked ? '<p><strong>Note:</strong> Face mask detected (Probability: ' + Math.round(faceResult.mask_probability * 100) + '%)</p>' : ''}
+                            </div>
+                    `;
+
+                    // Add warning if present
+                    if (faceResult.warning) {
+                        resultsHTML += `<div class="match-warning">${faceResult.warning}</div>`;
+                    }
+
+                    // Add twins info if present
+                    if (faceResult.potential_twins) {
+                        const twinsArray = faceResult.potential_twins;
+                        if (twinsArray.length >= 2) {
+                            resultsHTML += `<div class="match-twins-info">Potential twins detected: ${twinsArray[0].name} and ${twinsArray[1].name}</div>`;
+                        }
+                    }
+
+                    // Add match results
+                    if (faceResult.matches && faceResult.matches.length > 0) {
+                        resultsHTML += '<h4>Matches</h4>';
+                        
+                        faceResult.matches.forEach(match => {
+                            const similarityPercent = Math.round(match.similarity * 100);
+                            const confidencePercent = match.confidence ? Math.round(match.confidence * 100) : 'N/A';
+                            
+                            resultsHTML += `
+                                <div class="match-result-item">
+                                    <div class="match-image">
+                                        <img src="${match.image_url}" alt="${match.name}" onerror="markInvalidImage(this, '.match-result-item', 'Invalid Image')" loading="lazy">
+                                    </div>
+                                    <div class="match-details">
+                                        <h4>${match.name} <span class="match-score">${similarityPercent}%</span></h4>
+                                        <p>Confidence: ${confidencePercent}%</p>
+                                        <p>Cosine Similarity: ${Math.round(match.cosine_sim * 100)}%</p>
+                                        <p>L2 Similarity: ${Math.round(match.l2_similarity * 100)}%</p>
+                                        <p>Quality Score: ${match.quality_score ? Math.round(match.quality_score * 100) : 'N/A'}%</p>
+                                        ${match.is_partial ? '<p><strong>Note:</strong> Partial face detected</p>' : ''}
+                                        ${match.is_masked ? '<p><strong>Note:</strong> Face mask detected</p>' : ''}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        resultsHTML += '<div class="no-matches">No matching faces found.</div>';
+                    }
+
+                    resultsHTML += '</div>'; // Close face-result div
+                });
+            } else {
+                // Single face mode (original code)
+                // Add query image
+                resultsHTML += `
+                    <div class="query-image">
+                        <h3>Query Image</h3>
+                        <img src="${data.query_image_url}" alt="Query Face" loading="lazy">
+                    </div>
+                `;
+
+                // Add warning if present
+                if (data.warning) {
+                    resultsHTML += `<div class="match-warning">${data.warning}</div>`;
+                }
+
+                // Add twins info if present
+                if (data.is_twins && data.twins_info) {
+                    // Check if twins_info is an object with potential_twins property
+                    const twinsArray = Array.isArray(data.twins_info) ? 
+                                      data.twins_info : 
+                                      (data.twins_info.potential_twins || []);
+                    
+                    if (twinsArray.length >= 2) {
+                        resultsHTML += `<div class="match-twins-info">Potential twins detected: ${twinsArray[0].name} and ${twinsArray[1].name}</div>`;
+                    }
+                }
+
+                // Add timing information
+                resultsHTML += `
+                    <div class="timing-info">
+                        <p>Feature extraction: ${data.timing.feature_extraction_ms}ms | Search: ${data.timing.search_ms}ms</p>
+                    </div>
+                `;
+
+                // Add match results
+                if (data.matches && data.matches.length > 0) {
+                    resultsHTML += '<h3>Matches</h3>';
+                    
+                    data.matches.forEach(match => {
+                        const similarityPercent = Math.round(match.similarity * 100);
+                        const confidencePercent = Math.round(match.confidence * 100);
+                        
+                        resultsHTML += `
+                            <div class="match-result-item">
+                                <div class="match-image">
+                                    <img src="${match.image_url}" alt="${match.name}" onerror="markInvalidImage(this, '.match-result-item', 'Invalid Image')" loading="lazy">
+                                </div>
+                                <div class="match-details">
+                                    <h4>${match.name} <span class="match-score">${similarityPercent}%</span></h4>
+                                    <p>Confidence: ${confidencePercent}%</p>
+                                    <p>Cosine Similarity: ${Math.round(match.cosine_sim * 100)}%</p>
+                                    <p>L2 Similarity: ${Math.round(match.l2_similarity * 100)}%</p>
+                                    <p>Quality Score: ${Math.round(match.quality_score * 100)}%</p>
+                                    ${match.is_partial ? '<p><strong>Note:</strong> Partial face detected</p>' : ''}
+                                    ${match.is_masked ? '<p><strong>Note:</strong> Face mask detected</p>' : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    resultsHTML += '<div class="no-matches">No matching faces found.</div>';
+                }
+            }
+
+            resultsContainer.innerHTML = resultsHTML;
+        }
+
+        function clearMatch() {
+            document.getElementById('matchImage').value = '';
+            document.getElementById('matchResults').style.display = 'none';
+        }
+
+        function viewFaceDetails(faceId) {
+            fetch(`/get_face_details/${faceId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const face = data.face;
+                        alert(`Face Details:\n\nName: ${face.name}\nID: ${face.id}\nModel: ${face.model_name}\nAdded: ${new Date(face.created_at).toLocaleString()}\nImage: ${face.image_path}`);
+                    } else {
+                        alert('Failed to load face details: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading face details:', error);
+                    alert('Failed to load face details: ' + error.message);
+                });
+        }
+
+        function deleteFace(faceId) {
+            if (!confirm('Are you sure you want to delete this face? This action cannot be undone.')) {
+                return;
+            }
+
+            fetch(`/delete_face/${faceId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Face deleted successfully');
+                    performSearch(currentPage); // Refresh current page
+                } else {
+                    alert('Failed to delete face: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting face:', error);
+                alert('Failed to delete face: ' + error.message);
+            });
+        }
+        let extractedVideoFaces = [];
+        let currentVideoName = 'unknown_video';
+
+        function initializeVideoMatch() {
+            const videoMatchBtn = document.getElementById('videoMatchBtn');
+            const matchSelectedBtn = document.getElementById('matchSelectedFacesBtn');
+            const videoThresholdSlider = document.getElementById('videoThreshold');
+            const videoThresholdValueSpan = document.getElementById('videoThresholdValue');
+            const minQualitySlider = document.getElementById('minQuality');
+            const minQualityValueSpan = document.getElementById('minQualityValue');
+            
+            if (videoThresholdSlider) {
+                videoThresholdSlider.oninput = function() {
+                    videoThresholdValueSpan.textContent = parseFloat(this.value).toFixed(2);
+                };
+            }
+            
+            if (minQualitySlider) {
+                minQualitySlider.oninput = function() {
+                    minQualityValueSpan.textContent = parseFloat(this.value).toFixed(2);
+                };
+            }
+
+            if (videoMatchBtn) {
+                videoMatchBtn.addEventListener('click', function() {
+                    const videoInput = document.getElementById('videoFile');
+                    const modelSelect = document.getElementById('videoModel');
+                    const frameIntervalInput = document.getElementById('frameInterval');
+                    const extractionDiv = document.getElementById('videoExtractionResults');
+                    const resultsDiv = document.getElementById('videoMatchResults');
+                    const minQualityInput = document.getElementById('minQuality');
+                    
+                    if (videoInput.files.length === 0) {
+                        alert('Please select a video file');
+                        return;
+                    }
+                    
+                    currentVideoName = videoInput.files[0].name;
+                    
+                    const formData = new FormData();
+                    formData.append('video', videoInput.files[0]);
+                    formData.append('model', modelSelect.value);
+                    formData.append('frame_interval', frameIntervalInput.value);
+                    formData.append('min_quality', minQualityInput.value);
+                    
+                    videoMatchBtn.disabled = true;
+                    videoMatchBtn.textContent = 'Extracting Faces...';
+                    extractionDiv.style.display = 'none';
+                    resultsDiv.style.display = 'none';
+                    
+                    fetch('/extract_faces_from_video', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        videoMatchBtn.disabled = false;
+                        videoMatchBtn.textContent = 'Extract Faces';
+                        
+                        if (data.error) {
+                            alert('Error: ' + data.error);
+                            return;
+                        }
+                        
+                        extractedVideoFaces = data.faces;
+                        displayExtractedFaces(data.faces);
+                    })
+                    .catch(error => {
+                        videoMatchBtn.disabled = false;
+                        videoMatchBtn.textContent = 'Extract Faces';
+                        alert('Error: ' + error);
+                    });
+                });
+            }
+
+            if (matchSelectedBtn) {
+                matchSelectedBtn.addEventListener('click', function() {
+                    const selectedFaces = [];
+                    const checkboxes = document.querySelectorAll('.face-select-checkbox:checked');
+                    
+                    checkboxes.forEach(cb => {
+                        const index = parseInt(cb.getAttribute('data-index'));
+                        if (extractedVideoFaces[index]) {
+                            selectedFaces.push(extractedVideoFaces[index]);
+                        }
+                    });
+
+                    if (selectedFaces.length === 0) {
+                        alert('Please select at least one face to match.');
+                        return;
+                    }
+
+                    const modelSelect = document.getElementById('videoModel');
+                    const thresholdInput = document.getElementById('videoThreshold');
+                    const resultsDiv = document.getElementById('videoMatchResults');
+
+                    matchSelectedBtn.disabled = true;
+                    matchSelectedBtn.textContent = 'Matching...';
+                    resultsDiv.style.display = 'none';
+
+                    fetch('/match_selected_faces', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            faces: selectedFaces,
+                            model: modelSelect.value,
+                            threshold: thresholdInput.value
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        matchSelectedBtn.disabled = false;
+                        matchSelectedBtn.textContent = 'Match Selected Faces';
+                        
+                        if (data.error) {
+                            alert('Error: ' + data.error);
+                            return;
+                        }
+                        
+                        displayVideoMatchResults(data.matches);
+                    })
+                    .catch(error => {
+                        matchSelectedBtn.disabled = false;
+                        matchSelectedBtn.textContent = 'Match Selected Faces';
+                        alert('Error: ' + error);
+                    });
+                });
+            }
+        }
+        
+        function displayExtractedFaces(faces) {
+            const extractionDiv = document.getElementById('videoExtractionResults');
+            extractionDiv.style.display = 'block';
+            
+            if (!faces || faces.length === 0) {
+                extractionDiv.innerHTML = '<p>No faces found in the video.</p>';
+                return;
+            }
+            
+            let html = '<h3>Detected Faces (Select to Match)</h3>';
+            html += '<div class="button-group" style="margin-bottom: 10px;">';
+            html += '<button onclick="selectAllFaces(true)">Select All</button>';
+            html += '<button onclick="selectAllFaces(false)">Deselect All</button>';
+            html += '</div>';
+            html += '<div class="extracted-faces-grid">';
+            
+            faces.forEach((face, index) => {
+                html += `
+                <div class="extracted-face-item">
+                    <img src="${face.url}" alt="Face ${index}">
+                    <div class="extracted-face-info">
+                        <div>
+                            <span>${face.timestamp_str}</span><br>
+                            <span style="font-size: 0.8em; color: #666;">Qual: ${face.score.toFixed(2)}</span>
+                        </div>
+                        <input type="checkbox" class="face-select-checkbox" data-index="${index}" checked>
+                    </div>
+                </div>`;
+            });
+            
+            html += '</div>';
+            html += '<div class="button-group" style="margin-top: 20px;">';
+            html += '<button id="matchSelectedFacesBtn" class="button-primary">Match Selected Faces</button>';
+            html += '<button id="saveToLibraryBtn" class="button-primary" style="margin-left: 10px; background-color: #28a745; border-color: #28a745;">Save to Library</button>';
+            html += '</div>';
+            
+            extractionDiv.innerHTML = html;
+            
+            // Bind events
+            const matchBtn = document.getElementById('matchSelectedFacesBtn');
+            if (matchBtn) matchBtn.addEventListener('click', matchSelectedFacesLogic);
+            
+            const saveBtn = document.getElementById('saveToLibraryBtn');
+            if (saveBtn) saveBtn.addEventListener('click', saveSelectedToLibrary);
+        }
+
+        function matchSelectedFacesLogic() {
+             const matchSelectedBtn = document.getElementById('matchSelectedFacesBtn');
+             const selectedFaces = [];
+             const checkboxes = document.querySelectorAll('.face-select-checkbox:checked');
+             
+             checkboxes.forEach(cb => {
+                 const index = parseInt(cb.getAttribute('data-index'));
+                 if (extractedVideoFaces[index]) {
+                     selectedFaces.push(extractedVideoFaces[index]);
+                 }
+             });
+
+             if (selectedFaces.length === 0) {
+                 alert('Please select at least one face to match.');
+                 return;
+             }
+
+             const modelSelect = document.getElementById('videoModel');
+             const thresholdInput = document.getElementById('videoThreshold');
+             const resultsDiv = document.getElementById('videoMatchResults');
+
+             matchSelectedBtn.disabled = true;
+             matchSelectedBtn.textContent = 'Matching...';
+             resultsDiv.style.display = 'none';
+
+             fetch('/match_selected_faces', {
+                 method: 'POST',
+                 headers: {
+                     'Content-Type': 'application/json'
+                 },
+                 body: JSON.stringify({
+                     faces: selectedFaces,
+                     model: modelSelect.value,
+                     threshold: thresholdInput.value
+                 })
+             })
+             .then(response => response.json())
+             .then(data => {
+                 matchSelectedBtn.disabled = false;
+                 matchSelectedBtn.textContent = 'Match Selected Faces';
+                 
+                 if (data.error) {
+                     alert('Error: ' + data.error);
+                     return;
+                 }
+                 
+                 displayVideoMatchResults(data.matches);
+             })
+             .catch(error => {
+                 matchSelectedBtn.disabled = false;
+                 matchSelectedBtn.textContent = 'Match Selected Faces';
+                 alert('Error: ' + error);
+             });
+        }
+
+        function selectAllFaces(select) {
+            const checkboxes = document.querySelectorAll('.face-select-checkbox');
+            checkboxes.forEach(cb => cb.checked = select);
+        }
+        
+        function displayVideoMatchResults(matches) {
+            const resultsDiv = document.getElementById('videoMatchResults');
+            resultsDiv.style.display = 'block';
+            
+            // Scroll to results
+            resultsDiv.scrollIntoView({ behavior: 'smooth' });
+            
+            if (!matches || matches.length === 0) {
+                resultsDiv.innerHTML = '<p>No matches found for the selected faces.</p>';
+                return;
+            }
+            
+            let html = '<h3>Match Results</h3>';
+            html += '<table class="u-full-width"><thead><tr><th>Face Image</th><th>Time</th><th>Matched Name</th><th>Score</th></tr></thead><tbody>';
+            
+            matches.forEach(match => {
+                html += `<tr>
+                    <td><img src="${match.face_url}" style="height: 50px; border-radius: 4px;"></td>
+                    <td>${match.timestamp_str}</td>
+                    <td>${match.name}</td>
+                    <td>${match.score}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            resultsDiv.innerHTML = html;
+        }
+
+        function saveSelectedToLibrary() {
+            const selectedFaces = [];
+            const checkboxes = document.querySelectorAll('.face-select-checkbox:checked');
+            // Use currentVideoName set during extraction
+            const videoName = currentVideoName || 'unknown_video';
+            
+            checkboxes.forEach(cb => {
+                const index = parseInt(cb.getAttribute('data-index'));
+                if (extractedVideoFaces[index]) {
+                    selectedFaces.push(extractedVideoFaces[index]);
+                }
+            });
+
+            if (selectedFaces.length === 0) {
+                alert('Please select at least one face to save.');
+                return;
+            }
+
+            const btn = document.getElementById('saveToLibraryBtn');
+            if(btn) {
+                btn.disabled = true;
+                btn.textContent = 'Saving...';
+            }
+
+            fetch('/save_video_faces', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    faces: selectedFaces,
+                    video_name: videoName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Save to Library';
+                }
+                
+                if (data.success) {
+                    alert('Successfully saved ' + data.saved_count + ' faces to library.');
+                    loadVideoLibrary(); // Refresh library
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                if(btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Save to Library';
+                }
+                alert('Error: ' + error);
+            });
+        }
+
+        function initializeVideoLibrary() {
+            const refreshBtn = document.getElementById('refreshLibraryBtn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', loadVideoLibrary);
+            }
+            
+            const libTab = document.querySelector('.tab[data-tab="videoLibrary"]');
+            if (libTab) {
+                libTab.addEventListener('click', function() {
+                    const content = document.getElementById('videoLibraryContent');
+                    if (content.innerHTML.includes('Loading library...')) {
+                        loadVideoLibrary();
+                    }
+                });
+            }
+        }
+        
+        function loadVideoLibrary() {
+            const content = document.getElementById('videoLibraryContent');
+            content.innerHTML = '<p>Loading library...</p>';
+            
+            fetch('/get_video_library')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderVideoLibrary(data.library);
+                } else {
+                    content.innerHTML = '<p class="error">Error loading library: ' + data.error + '</p>';
+                }
+            })
+            .catch(error => {
+                content.innerHTML = '<p class="error">Error: ' + error + '</p>';
+            });
+        }
+        
+        function renderVideoLibrary(library) {
+            const content = document.getElementById('videoLibraryContent');
+            if (!library || library.length === 0) {
+                content.innerHTML = '<p>Library is empty. Extract faces from videos to add them here.</p>';
+                return;
+            }
+            
+            let html = '';
+            
+            library.forEach(video => {
+                html += `
+                <div class="video-group">
+                    <div class="video-header">
+                        <h3>${video.video_name} <span style="font-size: 0.7em; font-weight: normal;">(Uploaded: ${new Date(video.uploaded_at * 1000).toLocaleString()})</span></h3>
+                        <button onclick="deleteLibraryItem('${video.video_name}')" class="delete-btn button-primary" style="background-color: #dc3545; border-color: #dc3545;">Delete Group</button>
+                    </div>
+                    <div class="video-faces-row">
+                `;
+                
+                video.faces.forEach(face => {
+                    html += `
+                    <div class="library-face-item">
+                        <img src="${face.url}" alt="Face">
+                        <div class="library-face-info">
+                            <span>${face.timestamp_str}</span>
+                            <div class="library-face-actions" style="display: flex; flex-direction: column; gap: 5px; margin-top: 5px;">
+                                <button onclick="matchLibraryFace('${face.id}', '${video.video_name}')" class="small-btn button-primary" title="Identify person using Main DB">Identify</button>
+                                <button onclick="findInLibrary('${face.id}')" class="small-btn button-primary" style="background-color: #17a2b8; border-color: #17a2b8;" title="Find instances in other videos">Find in Videos</button>
+                                <button onclick="addFaceToDb('${face.id}')" class="small-btn button-primary" style="background-color: #28a745; border-color: #28a745;" title="Add to Main DB">Add to Faces</button>
+                                <button onclick="deleteLibraryItem('${video.video_name}', '${face.id}')" class="delete-btn small-btn button-primary" style="background-color: #dc3545; border-color: #dc3545;">Del</button>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                });
+                
+                html += `
+                    </div>
+                </div>
+                `;
+            });
+            
+            content.innerHTML = html;
+        }
+        
+        function deleteLibraryItem(videoName, faceId) {
+            if (!confirm('Are you sure you want to delete this item?')) {
+                return;
+            }
+            
+            fetch('/delete_video_library_item', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    video_name: videoName,
+                    face_id: faceId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadVideoLibrary();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error);
+            });
+        }
+        
+        function closeLibraryMatch() {
+            document.getElementById('libraryMatchResults').style.display = 'none';
+        }
+
+        function findInLibrary(faceId) {
+            const resultsDiv = document.getElementById('libraryMatchResults');
+            const contentDiv = document.getElementById('libraryMatchContent');
+            const thresholdInput = document.getElementById('videoThreshold');
+            const threshold = thresholdInput ? parseFloat(thresholdInput.value) : 0.6;
+            
+            resultsDiv.style.display = 'block';
+            contentDiv.innerHTML = '<p>Searching...</p>';
+            
+            fetch('/match_face_in_library', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ face_id: faceId, threshold: threshold })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) {
+                    if(data.matches.length === 0) {
+                        contentDiv.innerHTML = '<p>No matches found in other videos.</p>';
+                        return;
+                    }
+                    let html = '';
+                    data.matches.forEach(m => {
+                         html += `
+                            <div class="library-face-item">
+                                <img src="${m.url}" alt="Match">
+                                <div class="library-face-info">
+                                    <strong>${m.video_name}</strong><br>
+                                    <span>${m.timestamp_str}</span><br>
+                                    <span>Score: ${m.score.toFixed(4)}</span>
+                                </div>
+                            </div>
+                         `;
+                    });
+                    contentDiv.innerHTML = html;
+                } else {
+                    contentDiv.innerHTML = `<p class="error">Error: ${data.error}</p>`;
+                }
+            })
+            .catch(e => {
+                contentDiv.innerHTML = `<p class="error">Error: ${e}</p>`;
+            });
+        }
+
+        function addFaceToDb(faceId) {
+            const name = prompt("Enter the name of the person:");
+            if(!name) return;
+            
+            fetch('/add_video_face_to_db', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ face_id: faceId, person_name: name })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) {
+                    alert(data.message);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(e => alert('Error: ' + e));
+        }
+
+        function matchLibraryFace(faceId, videoName) {
+             const modelSelect = document.getElementById('videoModel'); 
+             const thresholdInput = document.getElementById('videoThreshold');
+             
+             // Get values or defaults
+             const model = modelSelect ? modelSelect.value : 'buffalo_l';
+             const threshold = thresholdInput ? parseFloat(thresholdInput.value) : 0.5;
+             
+             // Construct face object as expected by match_selected_faces
+             const selectedFaces = [{
+                 id: faceId, // "video_name/face.jpg"
+                 timestamp_str: 'Library Item',
+                 url: '/static/video_faces/' + faceId 
+             }];
+             
+             // Switch to Video Match tab
+             const videoMatchTab = document.querySelector('.tab[data-tab="videoMatch"]');
+             if(videoMatchTab) videoMatchTab.click();
+             
+             const resultsDiv = document.getElementById('videoMatchResults');
+             if(resultsDiv) {
+                 resultsDiv.style.display = 'block';
+                 resultsDiv.innerHTML = '<p>Matching face from library...</p>';
+                 resultsDiv.scrollIntoView({ behavior: 'smooth' });
+             }
+             
+             fetch('/match_selected_faces', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    faces: selectedFaces,
+                    model: model,
+                    threshold: threshold
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    if(resultsDiv) resultsDiv.innerHTML = '<p class="error">Error: ' + data.error + '</p>';
+                    else alert('Error: ' + data.error);
+                    return;
+                }
+                displayVideoMatchResults(data.matches);
+            })
+            .catch(error => {
+                if(resultsDiv) resultsDiv.innerHTML = '<p class="error">Error: ' + error + '</p>';
+                else alert('Error: ' + error);
+            });
+        }
+
+    </script>
+</body>
+</html>
+
+<!-- Add these CSS styles in the <style> section -->
+<style>
+.extracted-faces-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.extracted-face-item {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    text-align: center;
+    background-color: #fff;
+}
+
+.extracted-face-item img {
+    max-width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.extracted-face-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.video-group {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+}
+
+.video-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.video-faces-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.library-face-item {
+    border: 1px solid #eee;
+    background: #fff;
+    padding: 5px;
+    border-radius: 4px;
+    width: 120px;
+    text-align: center;
+}
+
+.library-face-item img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 2px;
+}
+
+.library-face-info {
+    font-size: 0.8em;
+    margin-top: 5px;
+}
+
+.library-face-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    gap: 2px;
+}
+
+.library-face-actions button {
+    padding: 0 5px;
+    height: 24px;
+    line-height: 24px;
+    font-size: 0.9em;
+}
+</style>

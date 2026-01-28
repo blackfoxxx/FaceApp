@@ -1,0 +1,36 @@
+# GPU-accelerated requirements for FaceApp deployment
+# Requires NVIDIA GPU with CUDA 11.8 support
+
+# Web Framework (Compatible versions)
+flask==2.3.3
+werkzeug==2.3.7
+flask-cors==4.0.0
+waitress==2.0.0
+
+# Core scientific computing (NumPy 1.x for compatibility)
+numpy<2.0
+pillow==8.4.0
+opencv-python==4.5.5.64
+
+# Machine learning and face recognition - GPU versions
+torch==2.0.1+cu118
+torchvision==0.15.2+cu118
+--extra-index-url https://download.pytorch.org/whl/cu118
+
+onnxruntime-gpu==1.15.1
+scikit-learn==1.0.2
+faiss-gpu==1.7.4
+insightface==0.7.3
+
+# Utilities
+Cython==0.29.32
+imagehash==4.3.1
+
+# Database (built-in with Python)
+# sqlite3 - included with Python standard library
+
+# GPU Requirements:
+# - NVIDIA GPU with CUDA Compute Capability 3.5+
+# - NVIDIA drivers 450.80.02+ (Linux) or 452.39+ (Windows)
+# - CUDA Toolkit 11.8
+# - cuDNN 8.7.0+ (usually included with PyTorch)

@@ -1,0 +1,17 @@
+name: faceapp
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - numpy
+  - flask
+  - flask-cors
+  - opencv
+  - tqdm
+  - faiss-cpu
+  - pillow
+  - pip:
+    - imagehash
+    - insightface==0.6.2

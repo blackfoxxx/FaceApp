@@ -1,0 +1,29 @@
+# Fixed requirements for FaceApp deployment
+# Compatible versions that work together
+
+# Web framework
+flask==2.0.3
+flask-cors==3.0.10
+waitress==2.0.0
+
+# Core scientific computing
+numpy==1.21.6
+pillow==8.4.0
+opencv-python==4.5.5.64
+
+# Machine learning and face recognition
+torch==1.12.1+cpu
+torchvision==0.13.1+cpu
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+onnxruntime==1.12.1
+scikit-learn==1.0.2
+faiss-cpu==1.7.4
+insightface==0.7.3
+
+# Utilities
+Cython==0.29.32
+imagehash==4.3.1
+
+# Database (built-in with Python)
+# sqlite3 - included with Python standard library
